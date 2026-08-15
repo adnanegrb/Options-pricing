@@ -1,28 +1,24 @@
 # Options Pricing Library
 
-A small options pricing library covering the models most likely to come
-up in a quant interview: Black-Scholes, Monte Carlo, a binomial tree,
-the five standard Greeks, and one exotic payoff (barrier options).
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![Tests](https://img.shields.io/badge/tests-21%20passing-brightgreen.svg)
+![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
 
-The point of this project isn't breadth — it's that every model here is
-cross-checked against at least one other independent method, and every
-number the tests assert is something I can derive on paper, not just
-something that happened to come out of the code. See `NOTES.md` for the
-derivations behind each model, including a real bug I hit and fixed
-while building the barrier pricer.
+A small options pricing library covering the models most likely to come up in a quant interview: Black-Scholes, Monte Carlo, a binomial tree, the five standard Greeks, and one exotic payoff (barrier options).
+
+I built this to go deep rather than wide. Every model here is cross checked against at least one other independent method, and every number the tests assert is something I can actually derive on paper, not just something that happened to come out when I ran the code. If you want the math behind each model, `NOTES.md` has it, including a real bug I hit (and fixed) while building the barrier pricer.
 
 ## What's here
 
-- **Black-Scholes** — closed-form, with a continuous dividend yield.
-- **Monte Carlo** — GBM simulation with antithetic variates for
-  variance reduction, plus a confidence interval on the price estimate.
-- **Binomial tree (CRR)** — European and American exercise; used to show
-  convergence to Black-Scholes as the number of steps grows.
-- **Greeks** — delta, gamma, theta, vega, rho, computed both
-  analytically and via bump-and-reprice, cross-checked against each
-  other.
-- **Barrier options** — up/down, knock-in/knock-out, priced both by a
-  closed-form formula (calls only) and by Monte Carlo.
+**Black-Scholes.** Closed-form, with a continuous dividend yield.
+
+**Monte Carlo.** GBM simulation with antithetic variates for variance reduction, plus a confidence interval on the price estimate.
+
+**Binomial tree (CRR).** European and American exercise, used to show convergence to Black-Scholes as the number of steps grows.
+
+**Greeks.** Delta, gamma, theta, vega, rho, computed both analytically and via bump and reprice, cross checked against each other.
+
+**Barrier options.** Up and down, knock in and knock out, priced both by a closed-form formula (calls only) and by Monte Carlo.
 
 ## Quick start
 
@@ -59,10 +55,7 @@ barrier.price("mc")
 pytest tests/ -v
 ```
 
-21 tests, structured around checking models against each other rather
-than checking fixed numbers: put-call parity, Monte Carlo and binomial
-convergence to Black-Scholes, analytical Greeks against numerical
-Greeks, and barrier in-out parity (knock-in + knock-out = vanilla).
+21 tests, mostly structured around checking models against each other rather than checking fixed numbers. Put-call parity, Monte Carlo and binomial convergence to Black-Scholes, analytical Greeks against numerical Greeks, and barrier in-out parity (knock-in plus knock-out equals vanilla).
 
 ## Structure
 
@@ -82,11 +75,7 @@ options_pricing/
 
 ## A known limitation, on purpose
 
-The analytical barrier formula only covers calls. Puts are priced via
-Monte Carlo instead. I could have implemented the put formula too —
-it's a similar structure with different terms — but I'd rather have one
-fully-derived, fully-understood analytical case than two I'd have to
-half-explain. `NOTES.md` covers why.
+The analytical barrier formula only covers calls. Puts are priced via Monte Carlo instead. I could've coded up the put formula too, it's a similar structure with different terms, but I'd rather have one case I can fully explain than two I'd have to half explain under pressure. `NOTES.md` goes into why.
 
 ## License
 
