@@ -1,11 +1,3 @@
-"""
-Tests that check the models agree with each other, not just that the
-code runs. The core idea throughout: Black-Scholes, Monte Carlo, and
-the binomial tree are three independent ways to compute the same
-number, and if they don't agree to within a reasonable tolerance,
-something is wrong with one of them.
-"""
-
 import pytest
 from options_pricing.models.base import OptionParams
 from options_pricing.models.black_scholes import BlackScholes
@@ -28,9 +20,7 @@ def atm_put():
 
 class TestBlackScholes:
     def test_put_call_parity(self, atm_call, atm_put):
-        # C - P = S*e^(-qT) - K*e^(-rT). This has to hold exactly (up to
-        # floating point) for any correct implementation, since it follows
-        # from a static replication argument, not from any model assumption.
+        
         call_price = BlackScholes(atm_call).price()
         put_price = BlackScholes(atm_put).price()
         p = atm_call
@@ -39,9 +29,7 @@ class TestBlackScholes:
         assert (call_price - put_price) == pytest.approx(expected, abs=1e-8)
 
     def test_deep_itm_call_converges_to_intrinsic(self):
-        # A deep in-the-money call with very low volatility should price
-        # close to its intrinsic value (S - K discounted), since there's
-        # almost no optionality left.
+        
         p = OptionParams(S=200, K=100, T=1.0, r=0.05, sigma=0.01, option_type="call")
         price = BlackScholes(p).price()
         import math
@@ -56,8 +44,7 @@ class TestMonteCarlo:
     def test_converges_to_black_scholes(self, atm_call):
         bs_price = BlackScholes(atm_call).price()
         mc_price = MonteCarlo(atm_call, n_paths=200_000).price()
-        # MC has statistical noise, so we allow a wider tolerance than
-        # the exact analytical checks above.
+        
         assert mc_price == pytest.approx(bs_price, rel=0.01)
 
     def test_converges_for_put(self, atm_put):
@@ -83,17 +70,13 @@ class TestBinomialTree:
         assert binomial_price == pytest.approx(bs_price, rel=1e-3)
 
     def test_american_call_no_dividends_equals_european(self, atm_call):
-        # Classic result: with no dividends, early exercise of an American
-        # call is never optimal (you'd give up remaining time value for
-        # nothing), so American and European call prices should match.
+        
         european = BinomialTree(atm_call, n_steps=500, american=False).price()
         american = BinomialTree(atm_call, n_steps=500, american=True).price()
         assert american == pytest.approx(european, rel=1e-6)
 
     def test_american_put_worth_more_than_european(self):
-        # Early exercise CAN be optimal for a put (e.g. deep ITM put,
-        # might as well take the strike now rather than wait), so the
-        # American put should be worth at least as much as the European one.
+        
         p = OptionParams(S=100, K=120, T=1.0, r=0.05, sigma=0.2, option_type="put")
         european = BinomialTree(p, n_steps=500, american=False).price()
         american = BinomialTree(p, n_steps=500, american=True).price()
@@ -116,20 +99,17 @@ class TestGreeks:
         assert -1 < delta < 0
 
     def test_gamma_is_positive(self, atm_call, atm_put):
-        # Gamma is positive for both calls and puts — convexity of the
-        # payoff means the option always benefits from movement.
+        
         assert AnalyticalGreeks(atm_call).gamma() > 0
         assert AnalyticalGreeks(atm_put).gamma() > 0
 
     def test_vega_is_positive(self, atm_call, atm_put):
-        # Vega positive for both — more volatility always helps an
-        # option holder, since payoffs are floored at zero.
+        
         assert AnalyticalGreeks(atm_call).vega() > 0
         assert AnalyticalGreeks(atm_put).vega() > 0
 
     def test_call_and_put_gamma_are_equal(self, atm_call, atm_put):
-        # Follows from put-call parity: delta_call - delta_put is
-        # constant in S, so their derivatives (gamma) must match.
+        
         call_gamma = AnalyticalGreeks(atm_call).gamma()
         put_gamma = AnalyticalGreeks(atm_put).gamma()
         assert call_gamma == pytest.approx(put_gamma, rel=1e-6)
@@ -137,8 +117,7 @@ class TestGreeks:
 
 class TestBarrierOption:
     def test_in_out_parity(self):
-        # knock-in + knock-out must equal the vanilla price, since every
-        # path either crosses the barrier or doesn't.
+        
         p = OptionParams(S=100, K=100, T=1.0, r=0.05, sigma=0.2, option_type="call")
         vanilla = BlackScholes(p).price()
 
@@ -148,12 +127,7 @@ class TestBarrierOption:
         assert (out_price + in_price) == pytest.approx(vanilla, abs=1e-8)
 
     def test_analytical_matches_mc(self):
-        # Note: the analytical formula assumes continuous barrier
-        # monitoring, while the MC simulation only checks discrete
-        # points, so a real gap survives even at large n_steps (see
-        # the discrete monitoring bias note in barrier.py). The
-        # tolerance here is set loose enough to accommodate that gap
-        # rather than expecting exact agreement.
+        
         p = OptionParams(S=100, K=100, T=1.0, r=0.05, sigma=0.2, option_type="call")
         barrier = BarrierOption(p, barrier=120, barrier_type="knock_out", direction="up")
 
@@ -163,8 +137,7 @@ class TestBarrierOption:
         assert mc_price == pytest.approx(analytical_price, abs=0.15)
 
     def test_down_and_out_analytical_matches_mc(self):
-        # Down-and-out with barrier below strike is a cleaner case to
-        # cross-check since the knock-out region is far from the strike.
+        
         p = OptionParams(S=100, K=100, T=1.0, r=0.05, sigma=0.2, option_type="call")
         barrier = BarrierOption(p, barrier=80, barrier_type="knock_out", direction="down")
 
@@ -174,8 +147,7 @@ class TestBarrierOption:
         assert mc_price == pytest.approx(analytical_price, abs=0.1)
 
     def test_barrier_out_worth_less_than_vanilla(self):
-        # A knock-out option can only pay off in a subset of the scenarios
-        # where the vanilla pays off, so it must be worth strictly less.
+        
         p = OptionParams(S=100, K=100, T=1.0, r=0.05, sigma=0.2, option_type="call")
         vanilla = BlackScholes(p).price()
         out_price = BarrierOption(p, barrier=120, barrier_type="knock_out", direction="up").price("analytical")
