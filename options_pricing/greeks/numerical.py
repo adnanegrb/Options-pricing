@@ -1,19 +1,3 @@
-"""
-Numerical Greeks via bump-and-reprice.
-
-The idea: instead of differentiating the pricing formula by hand, just
-perturb an input by a small amount h, reprice, and take the finite
-difference. This is slower and less precise than the analytical
-formulas, but it's a completely independent check — if a sign got
-flipped or a term got dropped in the analytical derivation, this
-should catch it, which is exactly what the test suite uses it for.
-
-Central difference (V(x+h) - V(x-h)) / (2h) is used instead of forward
-difference (V(x+h) - V(x)) / h because it's second-order accurate in h
-rather than first-order — the error shrinks like h^2 instead of h,
-so a small bump gives a much closer answer to the true derivative.
-"""
-
 import copy
 from options_pricing.models.black_scholes import BlackScholes
 from options_pricing.models.base import OptionParams
@@ -41,8 +25,7 @@ class NumericalGreeks:
         up = self._price_with(S=p.S + h)
         mid = BlackScholes(p).price()
         down = self._price_with(S=p.S - h)
-        # Second derivative: central difference of the first derivative,
-        # which reduces to this three-point formula.
+        
         return (up - 2 * mid + down) / (h ** 2)
 
     def vega(self) -> float:
@@ -53,8 +36,7 @@ class NumericalGreeks:
 
     def theta(self) -> float:
         p, h = self.p, self.h
-        # Theta is decay as time passes, i.e. as T decreases, so this is
-        # the negative of the derivative with respect to T.
+        
         up = self._price_with(T=p.T + h)
         down = self._price_with(T=p.T - h)
         return -(up - down) / (2 * h)
